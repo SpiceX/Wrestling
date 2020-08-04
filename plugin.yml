@@ -1,0 +1,12 @@
+name: Wrestling
+main: urbodus\wrestling\Wrestling
+version: 1.0-beta
+api: 3.0.0
+authors:
+  - Josewowgame2888
+  - LiTEK
+description: Wrestling plugin that includes BUHC, Sumo & 1vs1 for @Fireghost
+mcpe-protocols:
+  - 407
+load: POSTWORLD
+website: https://github.com/LiTEK/Wrestling
