@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 declare(strict_types=1);
-namespace pocketmine\command\types;
+namespace urbodus\wrestling\command\types;
 
 
 use pocketmine\command\CommandSender;

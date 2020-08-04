@@ -15,15 +15,26 @@
  * limitations under the License.
  */
 declare(strict_types=1);
+
 namespace urbodus\wrestling;
 
 use Exception;
+use pocketmine\entity\Entity;
+use pocketmine\event\Listener;
+use pocketmine\event\player\PlayerChatEvent;
+use pocketmine\level\Level;
+use pocketmine\Player;
 use pocketmine\plugin\PluginBase;
 use urbodus\wrestling\arena\Arena;
+use urbodus\wrestling\arena\MapReset;
 use urbodus\wrestling\command\CommandManager;
+use urbodus\wrestling\entities\types\JoinEntity;
+use urbodus\wrestling\entities\types\LeaderboardEntity;
+use urbodus\wrestling\form\FormManager;
 use urbodus\wrestling\scoreboard\ScoreboardStore;
+use urbodus\wrestling\utils\Vector3;
 
-class Wrestling extends PluginBase
+class Wrestling extends PluginBase implements Listener
 {
 	/** @var Wrestling */
 	private static $instance;
@@ -37,19 +48,225 @@ class Wrestling extends PluginBase
 	/** @var CommandManager */
 	private $commandManager;
 
+	/** @var Player[] */
+	private $setters = [];
+
+	/** @var array */
+	private $setupData = [];
+
+	/** @var FormManager */
+	private $formManager;
+
+	/**
+	 * @return Wrestling
+	 */
+	public static function getInstance(): Wrestling
+	{
+		return self::$instance;
+	}
+
 	public function onEnable()
 	{
 		$this->initVariables();
+		$this->registerEntities();
+		$this->getServer()->getPluginManager()->registerEvents($this, $this);
 	}
 
-	private function initVariables(){
+	private function initVariables()
+	{
 		try {
 			self::$instance = $this;
-			$this->scoreboardStore = new ScoreboardStore();
+			$this->scoreboardStore = new ScoreboardStore($this);
 			$this->commandManager = new CommandManager($this);
-		} catch (Exception $exception){
+			$this->formManager = new FormManager($this);
+		} catch (Exception $exception) {
 			$this->getLogger()->alert("Some variables could not be loaded: {$exception->getMessage()}");
 		}
+	}
+
+	private function registerEntities()
+	{
+		$entities = [LeaderboardEntity::class, JoinEntity::class];
+		foreach ($entities as $entity) {
+			Entity::registerEntity($entity, true);
+		}
+	}
+
+	/**
+	 * @param string $arenaName
+	 */
+	public function addArena(string $arenaName)
+	{
+		$this->arenas[$arenaName] = new Arena($this, []);
+	}
+
+	/**
+	 * @param Player $player
+	 * @param string $arena
+	 */
+	public function setSetter(Player $player, string $arena)
+	{
+		$this->setters[$player->getName()] = $this->arenas[$arena];
+		$player->teleport($this->getServer()->getLevelByName($arena)->getSafeSpawn());
+	}
+
+	/**
+	 * @param PlayerChatEvent $event
+	 */
+	public function onChat(PlayerChatEvent $event)
+	{
+		$player = $event->getPlayer();
+
+		if (!isset($this->setters[$player->getName()])) {
+			return;
+		}
+
+		$event->setCancelled(true);
+		$args = explode(" ", $event->getMessage());
+
+		/** @var Arena $arena */
+		$arena = $this->setters[$player->getName()];
+
+		switch ($args[0]) {
+			case "help":
+				$player->sendMessage("§b§l» §r§7Wrestling Setup Help §8(§7a1/1§8)\n" .
+					"§3help : §7Displays list of available setup commands\n" .
+					"§3slots : §7Updates arena slots\n" .
+					"§3level : §7Sets arena level\n" .
+					"§3gametype : §7Sets arena game type\n" .
+					"§3savelevel : §7Saves the arena level\n" .
+					"§3enable : §7Enables the arena");
+				break;
+			case "slots":
+				if (!isset($args[1])) {
+					$player->sendMessage("§c§l» §r§7Usage: slots <int: slots>");
+					break;
+				}
+				$arena->data["slots"] = (int)$args[1];
+				$player->sendMessage("§a§l» §r§7Slots updated to §a$args[1]!");
+				break;
+			case "level":
+				if (!isset($args[1])) {
+					$player->sendMessage("§c§l» §r§7Usage: §7level <levelName>");
+					break;
+				}
+				if (!$this->getServer()->isLevelGenerated($args[1])) {
+					$player->sendMessage("§c§l» §r§7Level $args[1] does not found!");
+					break;
+				}
+				$player->sendMessage("§a§l» §r§7Arena level updated to $args[1]!");
+				$arena->data["level"] = $args[1];
+				break;
+			case "spawn":
+				if (!isset($args[1])) {
+					$player->sendMessage("§c§l» §rUsage: §7setspawn <int: spawn>");
+					break;
+				}
+				if (!is_numeric($args[1])) {
+					$player->sendMessage("§c§l» §rType number!");
+					break;
+				}
+				if ((int)$args[1] > $arena->data["slots"]) {
+					$player->sendMessage("§c§l» §rThere are only {$arena->data["slots"]} slots!");
+					break;
+				}
+
+				$arena->data["spawns"]["spawn-{$args[1]}"] = (new Vector3($player->getX(), $player->getY(), $player->getZ()))->__toString();
+				$player->sendMessage("§a§l» §r§7Spawn §a$args[1]§7 set to §aX: §7" . (string)round($player->getX()) . " §aY: §7" . (string)round($player->getY()) . " §aZ: §7" . (string)round($player->getZ()));
+				break;
+			case "gametype":
+				if (!isset($args[1])) {
+					$player->sendMessage("§c§l» §r§7Usage: §7gametype <buhc|sumo|1vs1>");
+					break;
+				}
+				if (!in_array($args[1], ['buhc', 'sumo', '1vs1'])) {
+					$player->sendMessage("§c§l» §r§7Game type $args[1] is not available!");
+					break;
+				}
+				$player->sendMessage("§a§l» §r§7Game type updated to $args[1]!");
+				$arena->data["gametype"] = $args[1];
+				break;
+			case "savelevel":
+				if (!$arena->level instanceof Level) {
+					$levelName = $arena->data["level"];
+					if (!is_string($levelName) || !$this->getServer()->isLevelGenerated($levelName)) {
+						errorMessage:
+						$player->sendMessage("§c§l» §r§7Error while saving the level: world not found.");
+						if ($arena->setup) {
+							$player->sendMessage("§6§l» §r§7Try save level after enabling the arena.");
+						}
+						return;
+					}
+					if (!$this->getServer()->isLevelLoaded($levelName)) {
+						$this->getServer()->loadLevel($levelName);
+					}
+
+					try {
+						if (!$arena->mapReset instanceof MapReset) {
+							goto errorMessage;
+						}
+						$arena->mapReset->saveMap($this->getServer()->getLevelByName($levelName));
+						$player->sendMessage("§a§l» §r§7Level saved!");
+					} catch (Exception $exception) {
+						goto errorMessage;
+					}
+					break;
+				}
+				break;
+			case "enable":
+				if (!$arena->setup) {
+					$player->sendMessage("§6§l» §r§7Arena is already enabled!");
+					break;
+				}
+
+				if (!$arena->enable(false)) {
+					$player->sendMessage("§c§l» §r§7Could not load arena, there are missing information!");
+					break;
+				}
+
+				if ($this->getServer()->isLevelGenerated($arena->data["level"])) {
+					if (!$this->getServer()->isLevelLoaded($arena->data["level"]))
+						$this->getServer()->loadLevel($arena->data["level"]);
+					if (!$arena->mapReset instanceof MapReset)
+						$arena->mapReset = new MapReset($arena);
+					$arena->mapReset->saveMap($this->getServer()->getLevelByName($arena->data["level"]));
+				}
+
+				$arena->loadArena(false);
+				$player->sendMessage("§a§l» §r§7Arena enabled!");
+				break;
+			case "done":
+				$player->sendMessage("§a§l» §r§7You have successfully left setup mode!");
+				$this->removeSetter($player);
+				if (isset($this->setupData[$player->getName()])) {
+					unset($this->setupData[$player->getName()]);
+				}
+				break;
+			default:
+				$player->sendMessage("3You are now in setup mode.\n" .
+					"§b§l» §7use §3help §7to display available commands\n" .
+					"§b§l» §7or §3done §7to leave setup mode");
+				break;
+		}
+	}
+
+	/**
+	 * @param Player $player
+	 */
+	public function removeSetter(Player $player)
+	{
+		if ($this->isSetter($player)) {
+			unset($this->setters[$player->getName()]);
+		}
+	}
+
+	/**
+	 * @param Player $player
+	 * @return bool
+	 */
+	public function isSetter(Player $player)
+	{
+		return in_array($player->getName(), $this->setters);
 	}
 
 	/**
@@ -61,19 +278,19 @@ class Wrestling extends PluginBase
 	}
 
 	/**
-	 * @return Wrestling
-	 */
-	public static function getInstance(): Wrestling
-	{
-		return self::$instance;
-	}
-
-	/**
 	 * @return CommandManager
 	 */
 	public function getCommandManager(): CommandManager
 	{
 		return $this->commandManager;
+	}
+
+	/**
+	 * @return FormManager
+	 */
+	public function getFormManager(): FormManager
+	{
+		return $this->formManager;
 	}
 
 }

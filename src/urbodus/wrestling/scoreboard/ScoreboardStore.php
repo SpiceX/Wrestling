@@ -19,9 +19,13 @@ declare(strict_types=1);
 namespace urbodus\wrestling\scoreboard;
 
 use pocketmine\network\mcpe\protocol\types\ScorePacketEntry;
+use urbodus\wrestling\Wrestling;
 
 class ScoreboardStore
 {
+
+	/** @var Wrestling */
+	private $plugin;
 
 	/** @var array */
 	private $entries;
@@ -41,12 +45,22 @@ class ScoreboardStore
 	/** @var array */
 	private $viewers;
 
+
+	/**
+	 * ScoreboardStore constructor.
+	 * @param Wrestling $plugin
+	 */
+	public function __construct(Wrestling $plugin)
+	{
+		$this->plugin = $plugin;
+	}
+
+
 	/**
 	 * @param string $objectiveName
 	 * @param int $line
 	 * @param ScorePacketEntry $entry
 	 */
-
 	public function addEntry(string $objectiveName, int $line, ScorePacketEntry $entry)
 	{
 		$this->entries[$objectiveName][$line] = $entry;
@@ -56,7 +70,6 @@ class ScoreboardStore
 	 * @param string $objectiveName
 	 * @param int $line
 	 */
-
 	public function removeEntry(string $objectiveName, int $line)
 	{
 		unset($this->entries[$objectiveName][$line]);
@@ -65,7 +78,6 @@ class ScoreboardStore
 	/**
 	 * @param string $objectiveName
 	 */
-
 	public function removeEntries(string $objectiveName)
 	{
 		$this->entries[$objectiveName] = null;
@@ -78,7 +90,6 @@ class ScoreboardStore
 	 * @param int $sortOrder
 	 * @param int $scoreboardId
 	 */
-
 	public function registerScoreboard(string $objectiveName, string $displayName, string $displaySlot, int $sortOrder, int $scoreboardId): void
 	{
 		$this->entries[$objectiveName] = null;
@@ -93,7 +104,6 @@ class ScoreboardStore
 	 * @param string $objectiveName
 	 * @param string $displayName
 	 */
-
 	public function unregisterScoreboard(string $objectiveName, string $displayName): void
 	{
 		unset($this->entries[$objectiveName]);
@@ -109,7 +119,6 @@ class ScoreboardStore
 	 *
 	 * @return array
 	 */
-
 	public function getEntries(string $objectiveName): array
 	{
 		return $this->entries[$objectiveName];
@@ -121,7 +130,6 @@ class ScoreboardStore
 	 *
 	 * @return bool
 	 */
-
 	public function entryExist(string $objectiveName, int $line): bool
 	{
 		return isset($this->entries[$objectiveName][$line]);
@@ -132,7 +140,6 @@ class ScoreboardStore
 	 *
 	 * @return string|null
 	 */
-
 	public function getId(string $displayName)
 	{
 		return $this->scoreboards[$displayName] ?? null;
@@ -143,7 +150,6 @@ class ScoreboardStore
 	 *
 	 * @return string
 	 */
-
 	public function getDisplaySlot(string $objectiveName): string
 	{
 		return $this->displaySlots[$objectiveName];
@@ -154,7 +160,6 @@ class ScoreboardStore
 	 *
 	 * @return int
 	 */
-
 	public function getSortOrder(string $objectiveName): int
 	{
 		return $this->sortOrders[$objectiveName];
@@ -165,7 +170,6 @@ class ScoreboardStore
 	 *
 	 * @return int
 	 */
-
 	public function getScoreboardId(string $objectiveName): int
 	{
 		return $this->ids[$objectiveName];
@@ -175,7 +179,6 @@ class ScoreboardStore
 	 * @param string $objectiveName
 	 * @param string $playerName
 	 */
-
 	public function addViewer(string $objectiveName, string $playerName): void
 	{
 		if (!in_array($playerName, $this->viewers[$objectiveName])) {
@@ -187,7 +190,6 @@ class ScoreboardStore
 	 * @param string $objectiveName
 	 * @param string $playerName
 	 */
-
 	public function removeViewer(string $objectiveName, string $playerName): void
 	{
 		if (in_array($playerName, $this->viewers[$objectiveName])) {
@@ -202,7 +204,6 @@ class ScoreboardStore
 	 *
 	 * @return array|null
 	 */
-
 	public function getViewers(string $objectiveName): ?array
 	{
 		return $this->viewers[$objectiveName] ?? null;
@@ -212,7 +213,6 @@ class ScoreboardStore
 	 * @param string $oldName
 	 * @param string $newName
 	 */
-
 	public function rename(string $oldName, string $newName): void
 	{
 		$this->scoreboards[$newName] = $this->scoreboards[$oldName];
@@ -222,7 +222,6 @@ class ScoreboardStore
 	/**
 	 * @param string $playerName
 	 */
-
 	public function removePotentialViewer(string $playerName): void
 	{
 		foreach ($this->viewers as $name => $data) {
@@ -239,7 +238,6 @@ class ScoreboardStore
 	 *
 	 * @return string|null
 	 */
-
 	public function getScoreboardName(string $displayName): ?string
 	{
 		return $this->scoreboards[$displayName] ?? null;

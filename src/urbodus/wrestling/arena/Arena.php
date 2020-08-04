@@ -132,6 +132,9 @@ class Arena implements Listener, Game
 		if ($this->data["level"] == null) {
 			return false;
 		}
+		if ($this->data["gametype"] == null) {
+			return false;
+		}
 		if (!$this->plugin->getServer()->isLevelGenerated($this->data["level"])) {
 			return false;
 		}

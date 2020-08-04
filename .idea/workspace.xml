@@ -1,7 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="b5f562a2-462a-4450-8e16-4eb12b4fc53d" name="Default Changelist" comment="" />
+    <list default="true" id="b5f562a2-462a-4450-8e16-4eb12b4fc53d" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/src/urbodus/wrestling/entities/EntityManager.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/urbodus/wrestling/entities/types/JoinEntity.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/urbodus/wrestling/entities/types/LeaderboardEntity.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/urbodus/wrestling/form/FormManager.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/urbodus/wrestling/form/elements/Button.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/urbodus/wrestling/form/elements/Element.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/urbodus/wrestling/form/elements/Image.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/urbodus/wrestling/form/types/Form.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/urbodus/wrestling/form/types/MenuForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/urbodus/wrestling/Wrestling.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/urbodus/wrestling/Wrestling.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/urbodus/wrestling/arena/Arena.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/urbodus/wrestling/arena/Arena.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/urbodus/wrestling/command/CommandManager.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/urbodus/wrestling/command/CommandManager.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/urbodus/wrestling/command/types/ArenaSetupCommand.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/urbodus/wrestling/command/types/ArenaSetupCommand.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/urbodus/wrestling/command/types/UserCommand.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/urbodus/wrestling/command/types/UserCommand.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/urbodus/wrestling/scoreboard/ScoreboardStore.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/urbodus/wrestling/scoreboard/ScoreboardStore.php" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -69,12 +86,15 @@
     </include_path>
   </component>
   <component name="ProjectId" id="1fdn3YdhLfhpOTOCI9ZozCnuxAX" />
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
+    <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/../../src/pocketmine" />
@@ -97,9 +117,12 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1596556638750</updated>
-      <workItem from="1596556643222" duration="5906000" />
+      <workItem from="1596556643222" duration="13436000" />
     </task>
     <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
   </component>
   <component name="WindowStateProjectService">
     <state x="491" y="55" width="374" height="663" key="#com.intellij.ide.util.MemberChooser" timestamp="1596560413550">
@@ -110,17 +133,29 @@
       <screen x="0" y="0" width="1366" height="768" />
     </state>
     <state x="465" y="145" width="424" height="490" key="FileChooserDialogImpl/0.0.1366.768@0.0.1366.768" timestamp="1596557560088" />
-    <state x="380" y="115" width="679" height="550" key="NewPhpClassDialog" timestamp="1596562412611">
+    <state x="565" y="288" width="235" height="197" key="Github.ShareDialog" timestamp="1596562595399">
       <screen x="0" y="0" width="1366" height="768" />
     </state>
-    <state x="380" y="115" width="679" height="550" key="NewPhpClassDialog/0.0.1366.768@0.0.1366.768" timestamp="1596562412611" />
+    <state x="565" y="288" width="235" height="197" key="Github.ShareDialog/0.0.1366.768@0.0.1366.768" timestamp="1596562595399" />
+    <state x="462" y="112" width="432" height="550" key="Github.UntrackedFilesDialog" timestamp="1596562662067">
+      <screen x="0" y="0" width="1366" height="768" />
+    </state>
+    <state x="462" y="112" width="432" height="550" key="Github.UntrackedFilesDialog/0.0.1366.768@0.0.1366.768" timestamp="1596562662067" />
+    <state x="380" y="115" width="685" height="550" key="NewPhpClassDialog" timestamp="1596568410509">
+      <screen x="0" y="0" width="1366" height="768" />
+    </state>
+    <state x="380" y="115" width="685" height="550" key="NewPhpClassDialog/0.0.1366.768@0.0.1366.768" timestamp="1596568410509" />
     <state x="194" y="19" width="977" height="736" key="SettingsEditor" timestamp="1596557563203">
       <screen x="0" y="0" width="1366" height="768" />
     </state>
     <state x="194" y="19" width="977" height="736" key="SettingsEditor/0.0.1366.768@0.0.1366.768" timestamp="1596557563203" />
-    <state x="393" y="115" width="579" height="538" key="find.popup" timestamp="1596560583065">
+    <state x="334" y="199" width="688" height="376" key="com.jetbrains.php.test.PhpNewTestDialog" timestamp="1596567934308">
       <screen x="0" y="0" width="1366" height="768" />
     </state>
-    <state x="393" y="115" width="579" height="538" key="find.popup/0.0.1366.768@0.0.1366.768" timestamp="1596560583065" />
+    <state x="334" y="199" width="688" height="376" key="com.jetbrains.php.test.PhpNewTestDialog/0.0.1366.768@0.0.1366.768" timestamp="1596567934308" />
+    <state x="393" y="115" width="579" height="538" key="find.popup" timestamp="1596567583415">
+      <screen x="0" y="0" width="1366" height="768" />
+    </state>
+    <state x="393" y="115" width="579" height="538" key="find.popup/0.0.1366.768@0.0.1366.768" timestamp="1596567583415" />
   </component>
 </project>

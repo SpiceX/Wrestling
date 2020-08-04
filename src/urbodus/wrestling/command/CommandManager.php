@@ -18,9 +18,11 @@ declare(strict_types=1);
 namespace urbodus\wrestling\command;
 
 
-use pocketmine\command\Command;
-use pocketmine\command\types\ArenaSetupCommand;
+
 use pocketmine\plugin\PluginException;
+use urbodus\wrestling\command\types\ArenaSetupCommand;
+use urbodus\wrestling\command\types\UserCommand;
+use urbodus\wrestling\command\utils\Command;
 use urbodus\wrestling\Wrestling;
 
 class CommandManager
@@ -36,9 +38,9 @@ class CommandManager
 	 */
 	public function __construct(Wrestling $plugin)
 	{
-		$this->registerCommand(new ArenaSetupCommand("wg", "wrestling setup command", "/wg help", ["wg"]));
-		$this->registerCommand(new ArenaSetupCommand("wrestling", "wrestling user command", "/wrestling help", ["wrestling"]));
 		$this->plugin = $plugin;
+		$this->registerCommand(new ArenaSetupCommand("wg", "wrestling setup command", "§l§c» §r§7/wg help", ["wg"]));
+		$this->registerCommand(new UserCommand("wrestling", "wrestling user command", "§l§c» §r§7/wrestling help", ["wrestling"]));
 	}
 
 	/**

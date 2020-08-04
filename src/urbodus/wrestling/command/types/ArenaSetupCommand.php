@@ -15,17 +15,75 @@
  * limitations under the License.
  */
 declare(strict_types=1);
-namespace pocketmine\command\types;
+
+namespace urbodus\wrestling\command\types;
 
 
 use pocketmine\command\CommandSender;
+use pocketmine\command\ConsoleCommandSender;
+use pocketmine\entity\Entity;
+use pocketmine\Player;
+use pocketmine\Server;
 use urbodus\wrestling\command\utils\Command;
+use urbodus\wrestling\entities\types\JoinEntity;
 
 class ArenaSetupCommand extends Command
 {
 
 	public function execute(CommandSender $sender, string $commandLabel, array $args): void
 	{
-		// TODO: Implement execute() method.
+		if ($sender instanceof ConsoleCommandSender or !$sender->isOp()) {
+			$sender->sendMessage("§l§c» §r§7You cannot use this command!");
+			return;
+		}
+		if (isset($args[0]) && $sender instanceof Player) {
+			switch ($args[0]) {
+				case 'help':
+					$sender->sendMessage("§b§l» §r§7Wrestling Setup Command §8(§7a1/1§8)\n" .
+						"§3/wg create §7<arenaName>\n");
+					break;
+				case 'create':
+					if (!isset($args[1])) {
+						$sender->sendMessage("§c§l» §r§7/wg create <arenaName>");
+						break;
+					}
+					if ($this->getPlugin()->isSetter($sender)) {
+						$sender->sendMessage("§c§l» §r§7You are already in setup mode!");
+						break;
+					}
+					if (!Server::getInstance()->isLevelGenerated($args[1])) {
+						$sender->sendMessage("§c§l» §r§7There is no level called §3{$args[1]}!");
+						break;
+					}
+					if (!Server::getInstance()->isLevelLoaded($args[1])) {
+						Server::getInstance()->loadLevel($args[1]);
+						break;
+					}
+					$this->getPlugin()->addArena($args[1]);
+					$this->getPlugin()->setSetter($sender, $args[1]);
+					$sender->sendMessage("3You are now in setup mode.\n" .
+						"§b§l» §7use §3help §7to display available commands\n" .
+						"§b§l» §7or §3done §7to leave setup mode");
+					break;
+				case 'npc':
+					foreach ($sender->getLevel()->getEntities() as $entity) {
+						if ($entity instanceof JoinEntity) {
+							$entity->close();
+						}
+					}
+					$nbt = Entity::createBaseNBT($sender->asVector3());
+					$nbt->setTag(clone $sender->namedtag->getCompoundTag('Skin'));
+					$npc = new JoinEntity($sender->getLevel(), $nbt);
+					$npc->spawnToAll();
+					break;
+				case 'tops':
+					// TODO: tops
+
+			}
+		} else {
+			$sender->sendMessage($this->getUsage());
+		}
+
+		return;
 	}
 }
