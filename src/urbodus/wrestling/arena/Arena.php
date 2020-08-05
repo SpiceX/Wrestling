@@ -18,6 +18,8 @@ declare(strict_types=1);
 
 namespace urbodus\wrestling\arena;
 
+use pocketmine\entity\Effect;
+use pocketmine\entity\EffectInstance;
 use pocketmine\event\block\BlockBreakEvent;
 use pocketmine\event\entity\EntityDamageByEntityEvent;
 use pocketmine\event\entity\EntityDamageEvent;
@@ -61,7 +63,7 @@ class Arena implements Listener, Game
 	const PHASE_GAME = 1;
 	const PHASE_RESTART = 2;
 
-	const MINIMUM_VOID = 3;
+	const MINIMUM_VOID = 15;
 
 	/** @var Wrestling $plugin */
 	public $plugin;
@@ -113,7 +115,7 @@ class Arena implements Listener, Game
 		$this->plugin->getScheduler()->scheduleRepeatingTask($this->scheduler = new GameTask($this), 20);
 		$this->bossbar = new BossBar(Utils::addGuillemets("§r§7..."), 1, 1);
 		$this->scoreboard = new Scoreboard($plugin, Utils::addGuillemets("§a§lWRESTLING"), Scoreboard::ACTION_CREATE);
-		$this->scoreboard->create(Scoreboard::DISPLAY_MODE_SIDEBAR, Scoreboard::SORT_ASCENDING, true);
+		$this->scoreboard->create(Scoreboard::DISPLAY_MODE_SIDEBAR, Scoreboard::SORT_DESCENDING, true);
 		$this->scoreboard = new Scoreboard($plugin, Utils::addGuillemets("§a§lWRESTLING"), Scoreboard::ACTION_MODIFY);
 
 		if ($this->setup) {
@@ -230,6 +232,8 @@ class Arena implements Listener, Game
 					$player->getArmorInventory()->clearAll();
 					$player->getInventory()->clearAll();
 					$player->removeAllEffects();
+					$player->addEffect(new EffectInstance(Effect::getEffect(Effect::REGENERATION),20*90,3,false));
+					$player->addEffect(new EffectInstance(Effect::getEffect(Effect::DAMAGE_RESISTANCE),20*90,3,false));
 				}
 				break;
 			case Game::BUHC:
@@ -252,11 +256,11 @@ class Arena implements Listener, Game
 					$player->getArmorInventory()->setBoots($boots);
 					$player->getInventory()->setItem(0, $sword);
 					$player->getInventory()->setItem(1, $bow);
-					$player->getInventory()->setItem(2, Item::get(Item::BUCKET));
+					$player->getInventory()->setItem(2, Item::get(Item::BUCKET, 10));
 					$player->getInventory()->setItem(3, Item::get(Item::WOODEN_PLANKS, 0, 64));
 					$player->getInventory()->setItem(4, Item::get(Item::WOODEN_PLANKS, 0, 64));
 					$player->getInventory()->setItem(5, Item::get(Item::GOLDEN_APPLE, 0, 5));
-					$player->getInventory()->setItem(6, Item::get(Item::GOLDEN_APPLE, 0, 5));
+					$player->getInventory()->setItem(6, Item::get(Item::BUCKET, 8));
 					$player->getInventory()->setItem(7, Item::get(Item::FISHING_ROD));
 					$player->getInventory()->addItem(Item::get(Item::ARROW, 0, 64));
 				}
@@ -315,6 +319,16 @@ class Arena implements Listener, Game
 	}
 
 	/**
+	 * @param string $sound
+	 */
+	public function broadcastSound(string $sound): void
+	{
+		foreach ($this->players as $player) {
+			Utils::playSound($player, $sound);
+		}
+	}
+
+	/**
 	 * @param int $id
 	 * @param array $targetData
 	 * @param int $padding
@@ -335,11 +349,11 @@ class Arena implements Listener, Game
 			case self::SCOREBOARD_UPDATE:
 				$this->scoreboard->removeLines();
 				foreach ($this->players as $player) {
-					$this->scoreboard->setLine(1, "§7-------------");
-					$this->scoreboard->setLine(2, "§bUser: §7" . $player->getName());
-					$this->scoreboard->setLine(3, "§bGame: §7" . $this->gameType);
-					$this->scoreboard->setLine(4, "§bStatus: §3In Game");
-					$this->scoreboard->setLine(5, "§7-------------");
+					$this->scoreboard->setLine(2, "§7-------------");
+					$this->scoreboard->setLine(3, "§bUser: §7" . $player->getName());
+					$this->scoreboard->setLine(4, "§bGame: §7" . $this->gameType);
+					$this->scoreboard->setLine(5, "§bStatus: §3In Game");
+					$this->scoreboard->setLine(6, "§7-------------");
 					$this->scoreboard->showTo($player);
 				}
 				break;
@@ -359,6 +373,10 @@ class Arena implements Listener, Game
 		}
 
 		$player->sendTitle(Utils::addGuillemets("§aVictory!"));
+		Utils::playSound($player, "random.levelup");
+		$player->teleport($this->level->getSafeSpawn());
+		$player->setImmobile(true);
+		$this->plugin->getSqliteProvider()->addWin($player, $this->gameType);
 		$this->plugin->getServer()->broadcastMessage("§l§a» §r§7[Wrestling] Player §b{$player->getName()} §7won the game at §b{$this->level->getFolderName()}!");
 		$this->phase = self::PHASE_RESTART;
 	}
@@ -379,10 +397,14 @@ class Arena implements Listener, Game
 		if ($this->phase != self::PHASE_LOBBY) return;
 		$player = $event->getPlayer();
 		if ($this->inGame($player)) {
-			if ($player->getY() <= self::MINIMUM_VOID) {
-				$this->toRespawn[$player->getName()] = $player;
-				$this->disconnectPlayer($player, "", true);
-				$this->broadcastMessage("§a§l» §r§7{$player->getName()} has fallen into void §7[" . count($this->players) . "/{$this->data["slots"]}]");
+			switch ($this->phase){
+				case self::PHASE_GAME:
+					if ($player->getY() <= self::MINIMUM_VOID) {
+						$this->toRespawn[$player->getName()] = $player;
+						$this->disconnectPlayer($player, "", true);
+						$this->broadcastMessage("§a§l» §r§7{$player->getName()} has fallen into void §7[" . count($this->players) . "/{$this->data["slots"]}]");
+					}
+					break;
 			}
 		}
 	}
@@ -443,10 +465,19 @@ class Arena implements Listener, Game
 		$player->getCursorInventory()->clearAll();
 		$this->scoreboard->hideFrom($player);
 		$this->bossbar->hideFrom($player);
+		if ($player->isOnFire()){
+			$player->extinguish();
+		}
 		$player->teleport($this->plugin->getServer()->getDefaultLevel()->getSpawnLocation());
 
 		if (!$death) {
 			$this->broadcastMessage("§a§l» §r§7Player {$player->getName()} left the game. §7[" . count($this->players) . "/{$this->data["slots"]}]");
+		}
+
+		if ($death) {
+			$player->addEffect(new EffectInstance(Effect::getEffect(Effect::BLINDNESS), 2));
+			$player->sendTitle(Utils::addGuillemets("§r§cDEAD"));
+			$this->plugin->getSqliteProvider()->addLose($player, $this->gameType);
 		}
 
 		if ($quitMsg != "") {
@@ -479,13 +510,22 @@ class Arena implements Listener, Game
 		if ($player instanceof Player && $this->inGame($player)) {
 			switch ($this->gameType) {
 				case Game::SUMO:
-					if ($event->getCause() === EntityDamageEvent::CAUSE_VOID){
-						break;
+					if ($this->phase !== self::PHASE_GAME){
+						$event->setCancelled(true);
+						return;
 					}
-					$player->setHealth(21);
+					if ($event->getCause() === EntityDamageEvent::CAUSE_VOID) {
+						$this->toRespawn[$player->getName()] = $player;
+						$this->disconnectPlayer($player, "", true);
+						$this->broadcastMessage("§a§l» §r§7{$player->getName()} has fallen into void §7[" . count($this->players) . "/{$this->data["slots"]}]");
+					}
 					break;
 				case Game::ONEVSONE:
 				case Game::BUHC:
+					if ($this->phase !== self::PHASE_GAME){
+						$event->setCancelled();
+						return;
+					}
 					if ($event->getFinalDamage() > $player->getHealth()) {
 						$this->toRespawn[$player->getName()] = $player;
 						$this->disconnectPlayer($player, "", true);
@@ -568,6 +608,19 @@ class Arena implements Listener, Game
 			}
 		}
 
+		switch ($this->gameType) {
+			case self::ONEVSONE:
+				$player->sendMessage("§b1vs1 §7is a competitive minigame played within Minecraft.\nWhen playing §b1vs1§7, players need to beat their oponent, wining the duel.\nWin all matches and see your §6stats.");
+				break;
+			case self::SUMO:
+				$player->sendMessage("§bSumo §7is a competitive minigame played within Minecraft.\nWhen playing §bSumo§7, players need to hitting their oponent off the platform, wining the duel.\nWin all matches and see your §6stats.");
+				break;
+			case self::BUHC:
+				$player->sendMessage("§bBUHC §7is a competitive minigame played within Minecraft.\nWhen playing §bBUHC§7, players need to beat their opponent in the arena, wining the duel.\nWin all matches and see your §6stats.");
+				break;
+		}
+
+		Utils::playSound($player, "random.orb");
 		$player->getInventory()->clearAll();
 		$player->getArmorInventory()->clearAll();
 		$player->getCursorInventory()->clearAll();

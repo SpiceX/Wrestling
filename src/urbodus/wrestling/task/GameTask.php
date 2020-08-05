@@ -34,7 +34,7 @@ class GameTask extends Task
 {
 
 	/** @var int $startTime */
-	public $startTime = 40;
+	public $startTime = 10;
 	/** @var float|int $gameTime */
 	public $gameTime = 20 * 15;
 	/** @var int $restartTime */
@@ -71,6 +71,7 @@ class GameTask extends Task
 						}
 					} else {
 						if ($this->startTime > 0 && $this->startTime <= 5) {
+							$this->plugin->broadcastSound("note.bit");
 							$this->plugin->broadcastMessage("§b{$this->startTime}", Arena::MSG_TITLE);
 						}
 						foreach ($this->plugin->players as $player) {
@@ -80,7 +81,7 @@ class GameTask extends Task
 				} else {
 					$this->plugin->updateTargets(Arena::BOSSBAR_UPDATE, [Utils::addGuillemets("§r§7Waiting Players")], Padding::PADDING_CENTER);
 					$this->plugin->broadcastMessage(Utils::addGuillemets("§r§7Please wait for more players..."), Arena::MSG_TIP);
-					$this->startTime = 40;
+					$this->startTime = 10;
 				}
 				break;
 			case Arena::PHASE_GAME:
@@ -120,7 +121,7 @@ class GameTask extends Task
 
 	public function reloadTimer()
 	{
-		$this->startTime = 30;
+		$this->startTime = 10;
 		$this->gameTime = 20 * 15;
 		$this->restartTime = 10;
 	}

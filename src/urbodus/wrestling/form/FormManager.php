@@ -42,6 +42,7 @@ class FormManager
 
 	public function sendGamePanel(Player $player)
 	{
+		Utils::playSound($player, "random.pop2");
 		$player->sendForm(new MenuForm(Utils::addGuillemets("§b§lWrestling Panel"), "§7Select an option: ",
 			[
 				new Button("§9Random Game\n§7Join random game.", new Image("textures/ui/icon_random", Image::TYPE_PATH)),
@@ -55,6 +56,7 @@ class FormManager
 						if ($arena != null) {
 							$arena->joinToArena($player);
 						} else {
+							Utils::playSound($player, "note.bassattack");
 							$player->sendMessage("§c§l» §r§7There is not available arenas!");
 						}
 						break;
@@ -63,6 +65,7 @@ class FormManager
 						if ($arena != null) {
 							$arena->joinToArena($player);
 						} else {
+							Utils::playSound($player, "note.bassattack");
 							$player->sendMessage("§c§l» §r§7There is not available arenas!");
 						}
 						break;
@@ -71,6 +74,7 @@ class FormManager
 						if ($arena != null) {
 							$arena->joinToArena($player);
 						} else {
+							Utils::playSound($player, "note.bassattack");
 							$player->sendMessage("§c§l» §r§7There is not available arenas!");
 						}
 						break;
@@ -79,6 +83,7 @@ class FormManager
 						if ($arena != null) {
 							$arena->joinToArena($player);
 						} else {
+							Utils::playSound($player, "note.bassattack");
 							$player->sendMessage("§c§l» §r§7There is not available arenas!");
 						}
 						break;

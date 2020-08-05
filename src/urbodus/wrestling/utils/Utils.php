@@ -18,10 +18,25 @@ declare(strict_types=1);
 namespace urbodus\wrestling\utils;
 
 
+use pocketmine\network\mcpe\protocol\PlaySoundPacket;
+use pocketmine\Player;
+
 final class Utils
 {
 	public static function addGuillemets(string $message): string
 	{
 		return "§l§b» $message §l§b«";
+	}
+
+	public static function playSound(Player $player, string $sound): void
+	{
+		$pk = new PlaySoundPacket();
+		$pk->soundName = $sound;
+		$pk->x = (int)$player->x;
+		$pk->y = (int)$player->y;
+		$pk->z = (int)$player->z;
+		$pk->volume = 1;
+		$pk->pitch = 1;
+		$player->dataPacket($pk);
 	}
 }

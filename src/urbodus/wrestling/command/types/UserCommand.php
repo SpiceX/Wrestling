@@ -18,11 +18,11 @@ declare(strict_types=1);
 
 namespace urbodus\wrestling\command\types;
 
-
 use pocketmine\command\CommandSender;
 use pocketmine\Player;
 use urbodus\wrestling\arena\Game;
 use urbodus\wrestling\command\utils\Command;
+use urbodus\wrestling\utils\Utils;
 
 class UserCommand extends Command
 {
@@ -37,18 +37,24 @@ class UserCommand extends Command
 		if (isset($args[0]) && $sender instanceof Player) {
 			switch ($args[0]) {
 				case 'help':
+					Utils::playSound($sender, "note.xylophone");
 					$sender->sendMessage("§b§l» §r§7Wrestling User Command §8(§7a1/1§8)\n" .
 						"§3/wrestling join §7<optional: Game> - Join a random or specific game\n" .
+						"§3/wrestling info §7 - Show information about the plugin\n" .
 						"§3/wrestling stats §7 - See your pvp stats\n");
 					break;
 				case 'join':
 					if (isset($args[1])) {
+						if (!$this->getPlugin()->getSqliteProvider()->verifyPlayerInDB($sender)) {
+							$this->getPlugin()->getSqliteProvider()->addNewPlayer($sender);
+						}
 						switch ($args[1]) {
 							case 'buhc':
 								$arena = $this->getPlugin()->getRandomArena(Game::BUHC);
 								if ($arena != null) {
 									$arena->joinToArena($sender);
 								} else {
+									Utils::playSound($sender, "note.bassattack");
 									$sender->sendMessage("§c§l» §r§7There is not available arenas!");
 								}
 								break;
@@ -57,6 +63,7 @@ class UserCommand extends Command
 								if ($arena != null) {
 									$arena->joinToArena($sender);
 								} else {
+									Utils::playSound($sender, "note.bassattack");
 									$sender->sendMessage("§c§l» §r§7There is not available arenas!");
 								}
 								break;
@@ -65,20 +72,42 @@ class UserCommand extends Command
 								if ($arena != null) {
 									$arena->joinToArena($sender);
 								} else {
+									Utils::playSound($sender, "note.bassattack");
 									$sender->sendMessage("§c§l» §r§7There is not available arenas!");
 								}
 								break;
 							default:
+								Utils::playSound($sender, "note.bassattack");
 								$sender->sendMessage("§c§l» §r§7Usage: /wrestling join <buhc|sumo|1vs1>");
 						}
 					} else {
+						if (!$this->getPlugin()->getSqliteProvider()->verifyPlayerInDB($sender)) {
+							$this->getPlugin()->getSqliteProvider()->addNewPlayer($sender);
+						}
 						$arena = $this->getPlugin()->getRandomArena(null);
 						if ($arena != null) {
 							$arena->joinToArena($sender);
 						} else {
+							Utils::playSound($sender, "note.bassattack");
 							$sender->sendMessage("§c§l» §r§7There is not available arenas!");
 						}
 					}
+					break;
+				case 'stats':
+					if ($this->getPlugin()->getSqliteProvider()->verifyPlayerInDB($sender)) {
+						$sender->sendMessage($this->getPlugin()->getSqliteProvider()->getScore($sender));
+					} else {
+						Utils::playSound($sender, "note.didgeridoo");
+						$sender->sendMessage("§c§l» §r§7 You never played wrestling on this server!");
+					}
+					break;
+				case 'info':
+					$sender->sendMessage("§bPlugin made by LiTEK_");
+					$sender->sendMessage("§3Twitter: §b@LiTEK_");
+					$sender->sendMessage("§6Comissions always open");
+					break;
+				default:
+					$sender->sendMessage("§c§l» §r§7Usage: /wrestling help");
 			}
 		}
 	}

@@ -82,6 +82,10 @@ class Wrestling extends PluginBase implements Listener
 		$this->initVariables();
 		$this->registerEntities();
 		$this->getServer()->getPluginManager()->registerEvents($this, $this);
+		$this->getLogger()->info("§aPlugin initialized!");
+		$this->getLogger()->info("§aAuthor: _LiTEK");
+		$this->getLogger()->info("§aLICENSE: §2" . $this->getConfig()->get('license'));
+		$this->getLogger()->info("§6Found §e(" . count($this->arenas) . ")§6 arenas");
 	}
 
 	public function onDisable()
@@ -141,6 +145,9 @@ class Wrestling extends PluginBase implements Listener
 					return $arena;
 				}
 			}
+			if (empty($this->arenas)){
+				return null;
+			}
 			return $this->arenas[array_rand($this->arenas)];
 		} else {
 			$expectedArenas = [];
@@ -151,6 +158,9 @@ class Wrestling extends PluginBase implements Listener
 						return $arena;
 					}
 				}
+			}
+			if (empty($expectedArenas)){
+				return null;
 			}
 			return $expectedArenas[array_rand($expectedArenas)];
 		}
@@ -330,7 +340,9 @@ class Wrestling extends PluginBase implements Listener
 		}
 		if ($player instanceof Player && $entity instanceof JoinEntity) {
 			$event->setCancelled();
-			$this->getSqliteProvider()->addNewPlayer($player);
+			if (!$this->getSqliteProvider()->verifyPlayerInDB($player)){
+				$this->getSqliteProvider()->addNewPlayer($player);
+			}
 			$this->getFormManager()->sendGamePanel($player);
 		}
 	}

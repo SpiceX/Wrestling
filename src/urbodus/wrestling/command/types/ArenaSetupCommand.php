@@ -27,6 +27,7 @@ use pocketmine\Server;
 use pocketmine\utils\Config;
 use urbodus\wrestling\command\utils\Command;
 use urbodus\wrestling\entities\types\JoinEntity;
+use urbodus\wrestling\entities\types\LeaderboardEntity;
 
 class ArenaSetupCommand extends Command
 {
@@ -41,10 +42,10 @@ class ArenaSetupCommand extends Command
 			switch ($args[0]) {
 				case 'help':
 					$sender->sendMessage("§b§l» §r§7Wrestling Setup Command §8(§7a1/1§8)\n" .
-						"§3/wg create §7<arenaName> - Creates a new arena\n".
-					"§3/wg arenas §7 - See arena list\n".
-					"§3/wg remove §7<arenaName> - Remove an arena\n".
-					"§3/wg tops §7 - Place leaderboard\n");
+						"§3/wg create §7<arenaName> - Creates a new arena\n" .
+						"§3/wg arenas §7 - See arena list\n" .
+						"§3/wg remove §7<arenaName> - Remove an arena\n" .
+						"§3/wg tops §7 - Place leaderboard\n");
 					break;
 				case 'create':
 					if (!isset($args[1])) {
@@ -124,8 +125,23 @@ class ArenaSetupCommand extends Command
 					$sender->sendMessage("§a§l»§r§7 Arena removed!");
 					break;
 				case 'tops':
-					// TODO: tops
-
+					if (!isset($args[1]) || !in_array($args[1], ['buhc','1vs1','sumo'])) {
+						$sender->sendMessage("§c§l»§r§7 Usage: /tops <buhc|1vs1|sumo>");
+						return;
+					}
+					foreach ($sender->getLevel()->getEntities() as $entity) {
+						if ($entity instanceof LeaderboardEntity && $entity->namedtag->getString("LeaderboardType") === $args[1]) {
+							$entity->close();
+						}
+					}
+					$nbt = Entity::createBaseNBT($sender->asVector3());
+					$nbt->setTag($sender->namedtag->getCompoundTag("Skin"));
+					$nbt->setString("LeaderboardType",$args[1], true);
+					$status = new LeaderboardEntity($sender->level, $nbt);
+					$status->spawnToAll();
+					break;
+				default:
+					$sender->sendMessage("§c§l»§r§7 Usage: /wg help");
 			}
 		} else {
 			$sender->sendMessage($this->getUsage());
