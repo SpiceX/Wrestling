@@ -51,6 +51,8 @@ class YamlProvider {
 		if(!is_dir($this->getDataFolder() . "saves")) {
 			@mkdir($this->getDataFolder() . "saves");
 		}
+		$this->plugin->saveDefaultConfig();
+		$this->plugin->saveResource("database.sq3");
 	}
 
 	public function loadArenas() {

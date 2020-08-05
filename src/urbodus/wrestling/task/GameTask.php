@@ -15,13 +15,16 @@
  * limitations under the License.
  */
 declare(strict_types=1);
+
 namespace urbodus\wrestling\task;
 
 use pocketmine\level\sound\AnvilUseSound;
 use pocketmine\level\sound\ClickSound;
 use pocketmine\scheduler\Task;
 use urbodus\wrestling\arena\Arena;
+use urbodus\wrestling\utils\Padding;
 use urbodus\wrestling\utils\Time;
+use urbodus\wrestling\utils\Utils;
 
 /**
  * Class ArenaScheduler
@@ -30,18 +33,14 @@ use urbodus\wrestling\utils\Time;
 class GameTask extends Task
 {
 
-	/** @var Arena $plugin */
-	protected $plugin;
-
 	/** @var int $startTime */
 	public $startTime = 40;
-
 	/** @var float|int $gameTime */
-	public $gameTime = 20 * 60;
-
+	public $gameTime = 20 * 15;
 	/** @var int $restartTime */
 	public $restartTime = 10;
-
+	/** @var Arena $plugin */
+	protected $plugin;
 
 	/**
 	 * ArenaScheduler constructor.
@@ -63,7 +62,7 @@ class GameTask extends Task
 		switch ($this->plugin->phase) {
 			case Arena::PHASE_LOBBY:
 				if (count($this->plugin->players) >= 2) {
-					$this->plugin->broadcastMessage("§a> Starting in " . Time::calculateTime($this->startTime) . " sec.", Arena::MSG_TIP);
+					$this->plugin->updateTargets(Arena::BOSSBAR_UPDATE, [Utils::addGuillemets("§r§7Starting in " . Time::calculateTime($this->startTime) . " sec.")]);
 					$this->startTime--;
 					if ($this->startTime == 0) {
 						$this->plugin->startGame();
@@ -71,33 +70,29 @@ class GameTask extends Task
 							$this->plugin->level->addSound(new AnvilUseSound($player->asVector3()));
 						}
 					} else {
+						if ($this->startTime > 0 && $this->startTime <= 5) {
+							$this->plugin->broadcastMessage("§b{$this->startTime}", Arena::MSG_TITLE);
+						}
 						foreach ($this->plugin->players as $player) {
 							$this->plugin->level->addSound(new ClickSound($player->asVector3()));
 						}
 					}
 				} else {
-					$this->plugin->broadcastMessage("§c> You need more players to start a game!", Arena::MSG_TIP);
+					$this->plugin->updateTargets(Arena::BOSSBAR_UPDATE, [Utils::addGuillemets("§r§7Waiting Players")], Padding::PADDING_CENTER);
+					$this->plugin->broadcastMessage(Utils::addGuillemets("§r§7Please wait for more players..."), Arena::MSG_TIP);
 					$this->startTime = 40;
 				}
 				break;
 			case Arena::PHASE_GAME:
-				$this->plugin->broadcastMessage("§a> There are " . count($this->plugin->players) . " players, time to end: " . Time::calculateTime($this->gameTime) . "", Arena::MSG_TIP);
-				switch ($this->gameTime) {
-					case 15 * 60:
-						$this->plugin->broadcastMessage("§a> All chests will be refilled in 5 min.");
-						break;
-					case 11 * 60:
-						$this->plugin->broadcastMessage("§a> All chest will be refilled in 1 min.");
-						break;
-					case 10 * 60:
-						$this->plugin->broadcastMessage("§a> All chests are refilled.");
-						break;
+				$this->plugin->updateTargets(Arena::BOSSBAR_UPDATE, [Utils::addGuillemets("§r§7There are " . count($this->plugin->players) . " players, time to end: " . Time::calculateTime($this->gameTime))], Padding::PADDING_CENTER);
+				$this->plugin->updateTargets(Arena::SCOREBOARD_UPDATE);
+				if ($this->plugin->checkEnd()) {
+					$this->plugin->startRestart();
 				}
-				if ($this->plugin->checkEnd()) $this->plugin->startRestart();
 				$this->gameTime--;
 				break;
 			case Arena::PHASE_RESTART:
-				$this->plugin->broadcastMessage("§a> Restarting in {$this->restartTime} sec.", Arena::MSG_TIP);
+				$this->plugin->broadcastMessage(Utils::addGuillemets("§r§7Restarting in {$this->restartTime} sec."), Arena::MSG_TIP);
 				$this->restartTime--;
 
 				switch ($this->restartTime) {
@@ -123,11 +118,10 @@ class GameTask extends Task
 		}
 	}
 
-
 	public function reloadTimer()
 	{
 		$this->startTime = 30;
-		$this->gameTime = 20 * 60;
+		$this->gameTime = 20 * 15;
 		$this->restartTime = 10;
 	}
 }

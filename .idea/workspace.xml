@@ -1,30 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="BranchesTreeState">
+    <expand>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="LOCAL_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="GROUP_NODE:origin" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+    </expand>
+    <select />
+  </component>
   <component name="ChangeListManager">
-    <list default="true" id="b5f562a2-462a-4450-8e16-4eb12b4fc53d" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/src/urbodus/wrestling/entities/EntityManager.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/urbodus/wrestling/entities/types/JoinEntity.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/urbodus/wrestling/entities/types/LeaderboardEntity.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/urbodus/wrestling/form/FormManager.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/urbodus/wrestling/form/elements/Button.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/urbodus/wrestling/form/elements/Element.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/urbodus/wrestling/form/elements/Image.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/urbodus/wrestling/form/types/Form.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/urbodus/wrestling/form/types/MenuForm.php" afterDir="false" />
+    <list default="true" id="b5f562a2-462a-4450-8e16-4eb12b4fc53d" name="Default Changelist" comment="Added a lot of things">
+      <change afterPath="$PROJECT_DIR$/resources/database.sq3" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/urbodus/wrestling/provider/SQLite3Provider.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/config.yml" beforeDir="false" afterPath="$PROJECT_DIR$/resources/config.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/urbodus/wrestling/Wrestling.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/urbodus/wrestling/Wrestling.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/urbodus/wrestling/arena/Arena.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/urbodus/wrestling/arena/Arena.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/urbodus/wrestling/command/CommandManager.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/urbodus/wrestling/command/CommandManager.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/urbodus/wrestling/arena/Game.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/urbodus/wrestling/arena/Game.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/urbodus/wrestling/command/types/ArenaSetupCommand.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/urbodus/wrestling/command/types/ArenaSetupCommand.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/urbodus/wrestling/command/types/UserCommand.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/urbodus/wrestling/command/types/UserCommand.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/urbodus/wrestling/scoreboard/ScoreboardStore.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/urbodus/wrestling/scoreboard/ScoreboardStore.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/urbodus/wrestling/form/FormManager.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/urbodus/wrestling/form/FormManager.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/urbodus/wrestling/provider/YamlProvider.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/urbodus/wrestling/provider/YamlProvider.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/urbodus/wrestling/task/GameTask.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/urbodus/wrestling/task/GameTask.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ComposerSettings" synchronizationState="SYNCHRONIZE">
+  <component name="ComposerSettings" doNotAsk="true" synchronizationState="SYNCHRONIZE">
     <pharConfigPath>$PROJECT_DIR$/../../composer.json</pharConfigPath>
     <execution>
       <phar pharPath="$PROJECT_DIR$/../../composer.phar" interpreterId="2ac5fa43-c4fb-442f-98b5-8a9866642a62" />
@@ -101,12 +116,6 @@
     <property name="php.override.implement.member.chooser.php.doc" value="NONE" />
     <property name="settings.editor.selected.configurable" value="reference.webide.settings.project.settings.php.composer" />
   </component>
-  <component name="RunManager">
-    <configuration default="true" type="ComposerRunConfigurationType" factoryName="Composer Script">
-      <option name="pathToComposerJson" value="$PROJECT_DIR$/../../composer.json" />
-      <method v="2" />
-    </configuration>
-  </component>
   <component name="SvnConfiguration">
     <configuration />
   </component>
@@ -117,18 +126,48 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1596556638750</updated>
-      <workItem from="1596556643222" duration="13436000" />
+      <workItem from="1596556643222" duration="21491000" />
+      <workItem from="1596586490193" duration="11278000" />
     </task>
+    <task id="LOCAL-00001" summary="Added a lot of things">
+      <created>1596570135619</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1596570135625</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="VcsManagerConfiguration">
     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
+    <MESSAGE value="Added a lot of things" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added a lot of things" />
   </component>
   <component name="WindowStateProjectService">
+    <state x="443" y="182" width="469" height="409" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1596597632752">
+      <screen x="0" y="0" width="1366" height="768" />
+    </state>
+    <state x="443" y="182" width="469" height="409" key="#com.intellij.fileTypes.FileTypeChooser/0.0.1366.768@0.0.1366.768" timestamp="1596597632752" />
     <state x="491" y="55" width="374" height="663" key="#com.intellij.ide.util.MemberChooser" timestamp="1596560413550">
       <screen x="0" y="0" width="1366" height="768" />
     </state>
     <state x="491" y="55" width="374" height="663" key="#com.intellij.ide.util.MemberChooser/0.0.1366.768@0.0.1366.768" timestamp="1596560413550" />
+    <state x="416" y="142" width="524" height="490" key="#com.jetbrains.php.actions.copyPaste.importReferences.PhpImportReferencesDialog" timestamp="1596592520953">
+      <screen x="0" y="0" width="1366" height="768" />
+    </state>
+    <state x="416" y="142" width="524" height="490" key="#com.jetbrains.php.actions.copyPaste.importReferences.PhpImportReferencesDialog/0.0.1366.768@0.0.1366.768" timestamp="1596592520953" />
     <state x="465" y="145" width="424" height="490" key="FileChooserDialogImpl" timestamp="1596557560088">
       <screen x="0" y="0" width="1366" height="768" />
     </state>
@@ -141,14 +180,18 @@
       <screen x="0" y="0" width="1366" height="768" />
     </state>
     <state x="462" y="112" width="432" height="550" key="Github.UntrackedFilesDialog/0.0.1366.768@0.0.1366.768" timestamp="1596562662067" />
-    <state x="380" y="115" width="685" height="550" key="NewPhpClassDialog" timestamp="1596568410509">
+    <state x="380" y="115" width="685" height="550" key="NewPhpClassDialog" timestamp="1596597396749">
       <screen x="0" y="0" width="1366" height="768" />
     </state>
-    <state x="380" y="115" width="685" height="550" key="NewPhpClassDialog/0.0.1366.768@0.0.1366.768" timestamp="1596568410509" />
+    <state x="380" y="115" width="685" height="550" key="NewPhpClassDialog/0.0.1366.768@0.0.1366.768" timestamp="1596597396749" />
     <state x="194" y="19" width="977" height="736" key="SettingsEditor" timestamp="1596557563203">
       <screen x="0" y="0" width="1366" height="768" />
     </state>
     <state x="194" y="19" width="977" height="736" key="SettingsEditor/0.0.1366.768@0.0.1366.768" timestamp="1596557563203" />
+    <state x="278" y="135" width="800" height="534" key="Vcs.Push.Dialog.v2" timestamp="1596570142042">
+      <screen x="0" y="30" width="1366" height="738" />
+    </state>
+    <state x="278" y="135" width="800" height="534" key="Vcs.Push.Dialog.v2/0.30.1366.738@0.30.1366.738" timestamp="1596570142042" />
     <state x="334" y="199" width="688" height="376" key="com.jetbrains.php.test.PhpNewTestDialog" timestamp="1596567934308">
       <screen x="0" y="0" width="1366" height="768" />
     </state>

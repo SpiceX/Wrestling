@@ -21,10 +21,11 @@ declare(strict_types=1);
 namespace urbodus\wrestling\form;
 
 use pocketmine\Player;
-use urbodus\wrestling\arena\Arena;
+use urbodus\wrestling\arena\Game;
 use urbodus\wrestling\form\elements\Button;
 use urbodus\wrestling\form\elements\Image;
 use urbodus\wrestling\form\types\MenuForm;
+use urbodus\wrestling\utils\Utils;
 use urbodus\wrestling\Wrestling;
 
 class FormManager
@@ -39,34 +40,50 @@ class FormManager
 		$this->plugin = $plugin;
 	}
 
-	public function sendUHCPanel(Player $player)
+	public function sendGamePanel(Player $player)
 	{
-		$player->sendForm(new MenuForm("§c§lUHC RUN PANEL", "§7Select an option: ",
+		$player->sendForm(new MenuForm(Utils::addGuillemets("§b§lWrestling Panel"), "§7Select an option: ",
 			[
-				new Button("§6UHC RUN [Select Maps]", new Image("textures/items/book_written", Image::TYPE_PATH))
+				new Button("§9Random Game\n§7Join random game.", new Image("textures/ui/icon_random", Image::TYPE_PATH)),
+				new Button("§9BUHC\n§7Classic build practice", new Image("textures/ui/Scaffolding", Image::TYPE_PATH)),
+				new Button("§9SUMO\n§7Dont fall from platform.", new Image("textures/ui/icon_fall", Image::TYPE_PATH)),
+				new Button("§91VS1\n§7Beat your oponent.", new Image("textures/ui/resistance_effect", Image::TYPE_PATH)),
 			], function (Player $player, Button $selected): void {
-				$this->sendArenasForm($player);
+				switch ($selected->getValue()) {
+					case 0:
+						$arena = $this->plugin->getRandomArena(null);
+						if ($arena != null) {
+							$arena->joinToArena($player);
+						} else {
+							$player->sendMessage("§c§l» §r§7There is not available arenas!");
+						}
+						break;
+					case 1:
+						$arena = $this->plugin->getRandomArena(Game::BUHC);
+						if ($arena != null) {
+							$arena->joinToArena($player);
+						} else {
+							$player->sendMessage("§c§l» §r§7There is not available arenas!");
+						}
+						break;
+					case 2:
+						$arena = $this->plugin->getRandomArena(Game::SUMO);
+						if ($arena != null) {
+							$arena->joinToArena($player);
+						} else {
+							$player->sendMessage("§c§l» §r§7There is not available arenas!");
+						}
+						break;
+					case 3:
+						$arena = $this->plugin->getRandomArena(Game::ONEVSONE);
+						if ($arena != null) {
+							$arena->joinToArena($player);
+						} else {
+							$player->sendMessage("§c§l» §r§7There is not available arenas!");
+						}
+						break;
+				}
 			}));
 	}
 
-	public function sendArenasForm(Player $player)
-	{
-		$player->sendForm(new MenuForm("§0Wrestling", "§7Available arenas for uhc run: ",
-			$this->getArenasButtons(), function (Player $player, Button $selected): void {
-				/** @var Arena $arena */
-				$arena = $this->plugin->arenas[explode("\n", $selected->getText())[0]];
-				$arena->joinToArena($player);
-			}));
-	}
-
-	public function getArenasButtons(int $gameType)
-	{
-		$buttons = [];
-		foreach ($this->plugin->arenas as $name => $arena) {
-			if ($arena->gameType === $gameType) {
-				$buttons[] = new Button($name . "\n§aPlaying: " . count($arena->players));
-			}
-		}
-		return $buttons;
-	}
 }

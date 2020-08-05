@@ -20,17 +20,21 @@ namespace urbodus\wrestling;
 
 use Exception;
 use pocketmine\entity\Entity;
+use pocketmine\event\entity\EntityDamageByEntityEvent;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerChatEvent;
 use pocketmine\level\Level;
 use pocketmine\Player;
 use pocketmine\plugin\PluginBase;
+use pocketmine\utils\Config;
 use urbodus\wrestling\arena\Arena;
 use urbodus\wrestling\arena\MapReset;
 use urbodus\wrestling\command\CommandManager;
 use urbodus\wrestling\entities\types\JoinEntity;
 use urbodus\wrestling\entities\types\LeaderboardEntity;
 use urbodus\wrestling\form\FormManager;
+use urbodus\wrestling\provider\SQLite3Provider;
+use urbodus\wrestling\provider\YamlProvider;
 use urbodus\wrestling\scoreboard\ScoreboardStore;
 use urbodus\wrestling\utils\Vector3;
 
@@ -56,6 +60,14 @@ class Wrestling extends PluginBase implements Listener
 
 	/** @var FormManager */
 	private $formManager;
+	/**
+	 * @var YamlProvider
+	 */
+	public $yamlProvider;
+	/**
+	 * @var SQLite3Provider
+	 */
+	private $sqliteProvider;
 
 	/**
 	 * @return Wrestling
@@ -72,6 +84,11 @@ class Wrestling extends PluginBase implements Listener
 		$this->getServer()->getPluginManager()->registerEvents($this, $this);
 	}
 
+	public function onDisable()
+	{
+		$this->getSqliteProvider()->closeDatabase();
+	}
+
 	private function initVariables()
 	{
 		try {
@@ -79,6 +96,8 @@ class Wrestling extends PluginBase implements Listener
 			$this->scoreboardStore = new ScoreboardStore($this);
 			$this->commandManager = new CommandManager($this);
 			$this->formManager = new FormManager($this);
+			$this->yamlProvider = new YamlProvider($this);
+			$this->sqliteProvider = new SQLite3Provider($this);
 		} catch (Exception $exception) {
 			$this->getLogger()->alert("Some variables could not be loaded: {$exception->getMessage()}");
 		}
@@ -111,6 +130,33 @@ class Wrestling extends PluginBase implements Listener
 	}
 
 	/**
+	 * @param string $gameType
+	 * @return Arena|null
+	 */
+	public function getRandomArena(string $gameType = null): ?Arena
+	{
+		if ($gameType === null){
+			foreach ($this->arenas as $name => $arena) {
+				if (count($arena->players) > 0){
+					return $arena;
+				}
+			}
+			return $this->arenas[array_rand($this->arenas)];
+		} else {
+			$expectedArenas = [];
+			foreach ($this->arenas as $name => $arena) {
+				if ($arena->gameType === $gameType){
+					$expectedArenas[] = $arena;
+					if (count($arena->players) > 0){
+						return $arena;
+					}
+				}
+			}
+			return $expectedArenas[array_rand($expectedArenas)];
+		}
+	}
+
+	/**
 	 * @param PlayerChatEvent $event
 	 */
 	public function onChat(PlayerChatEvent $event)
@@ -129,9 +175,10 @@ class Wrestling extends PluginBase implements Listener
 
 		switch ($args[0]) {
 			case "help":
-				$player->sendMessage("§b§l» §r§7Wrestling Setup Help §8(§7a1/1§8)\n" .
+				$player->sendMessage("§b§l» §r§7Wrestling Setup Help §8(§7§a1/1§8)\n" .
 					"§3help : §7Displays list of available setup commands\n" .
 					"§3slots : §7Updates arena slots\n" .
+					"§3spawn : §7Sets slot number in arena\n" .
 					"§3level : §7Sets arena level\n" .
 					"§3gametype : §7Sets arena game type\n" .
 					"§3savelevel : §7Saves the arena level\n" .
@@ -231,7 +278,11 @@ class Wrestling extends PluginBase implements Listener
 						$arena->mapReset = new MapReset($arena);
 					$arena->mapReset->saveMap($this->getServer()->getLevelByName($arena->data["level"]));
 				}
-
+				if(is_file($file = $this->getDataFolder() . "arenas" . DIRECTORY_SEPARATOR . $arena->data["level"] . ".yml")) {
+					$config = new Config($file, Config::YAML);
+					$config->setAll($arena->data);
+					$config->save();
+				}
 				$arena->loadArena(false);
 				$player->sendMessage("§a§l» §r§7Arena enabled!");
 				break;
@@ -243,7 +294,7 @@ class Wrestling extends PluginBase implements Listener
 				}
 				break;
 			default:
-				$player->sendMessage("3You are now in setup mode.\n" .
+				$player->sendMessage("§3You are now in setup mode.\n" .
 					"§b§l» §7use §3help §7to display available commands\n" .
 					"§b§l» §7or §3done §7to leave setup mode");
 				break;
@@ -255,9 +306,7 @@ class Wrestling extends PluginBase implements Listener
 	 */
 	public function removeSetter(Player $player)
 	{
-		if ($this->isSetter($player)) {
-			unset($this->setters[$player->getName()]);
-		}
+		unset($this->setters[$player->getName()]);
 	}
 
 	/**
@@ -267,6 +316,23 @@ class Wrestling extends PluginBase implements Listener
 	public function isSetter(Player $player)
 	{
 		return in_array($player->getName(), $this->setters);
+	}
+
+	/**
+	 * @param EntityDamageByEntityEvent $event
+	 */
+	public function onDamage(EntityDamageByEntityEvent $event)
+	{
+		$player = $event->getDamager();
+		$entity = $event->getEntity();
+		if ($player instanceof Player && $entity instanceof LeaderboardEntity) {
+			$event->setCancelled();
+		}
+		if ($player instanceof Player && $entity instanceof JoinEntity) {
+			$event->setCancelled();
+			$this->getSqliteProvider()->addNewPlayer($player);
+			$this->getFormManager()->sendGamePanel($player);
+		}
 	}
 
 	/**
@@ -291,6 +357,22 @@ class Wrestling extends PluginBase implements Listener
 	public function getFormManager(): FormManager
 	{
 		return $this->formManager;
+	}
+
+	/**
+	 * @return YamlProvider
+	 */
+	public function getYamlProvider(): YamlProvider
+	{
+		return $this->yamlProvider;
+	}
+
+	/**
+	 * @return SQLite3Provider
+	 */
+	public function getSqliteProvider(): SQLite3Provider
+	{
+		return $this->sqliteProvider;
 	}
 
 }

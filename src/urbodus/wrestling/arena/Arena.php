@@ -18,19 +18,22 @@ declare(strict_types=1);
 
 namespace urbodus\wrestling\arena;
 
-use pocketmine\block\Block;
+use pocketmine\event\block\BlockBreakEvent;
+use pocketmine\event\entity\EntityDamageByEntityEvent;
+use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\entity\EntityLevelChangeEvent;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerDeathEvent;
 use pocketmine\event\player\PlayerExhaustEvent;
-use pocketmine\event\player\PlayerInteractEvent;
 use pocketmine\event\player\PlayerMoveEvent;
 use pocketmine\event\player\PlayerQuitEvent;
 use pocketmine\event\player\PlayerRespawnEvent;
+use pocketmine\item\enchantment\Enchantment;
+use pocketmine\item\enchantment\EnchantmentInstance;
+use pocketmine\item\Item;
 use pocketmine\level\Level;
 use pocketmine\level\Position;
 use pocketmine\Player;
-use pocketmine\tile\Tile;
 use urbodus\wrestling\bossbar\BossBar;
 use urbodus\wrestling\scoreboard\Scoreboard;
 use urbodus\wrestling\task\GameTask;
@@ -58,10 +61,12 @@ class Arena implements Listener, Game
 	const PHASE_GAME = 1;
 	const PHASE_RESTART = 2;
 
+	const MINIMUM_VOID = 3;
+
 	/** @var Wrestling $plugin */
 	public $plugin;
 
-	/** @var int */
+	/** @var string */
 	public $gameType;
 
 	/** @var GameTask $scheduler */
@@ -89,7 +94,7 @@ class Arena implements Listener, Game
 	public $level = null;
 
 	/** @var BossBar */
-	private $bossbar;
+	public $bossbar;
 
 	/** @var Scoreboard */
 	private $scoreboard;
@@ -108,7 +113,7 @@ class Arena implements Listener, Game
 		$this->plugin->getScheduler()->scheduleRepeatingTask($this->scheduler = new GameTask($this), 20);
 		$this->bossbar = new BossBar(Utils::addGuillemets("§r§7..."), 1, 1);
 		$this->scoreboard = new Scoreboard($plugin, Utils::addGuillemets("§a§lWRESTLING"), Scoreboard::ACTION_CREATE);
-		$this->scoreboard->create(Scoreboard::DISPLAY_MODE_SIDEBAR, Scoreboard::SORT_DESCENDING, true);
+		$this->scoreboard->create(Scoreboard::DISPLAY_MODE_SIDEBAR, Scoreboard::SORT_ASCENDING, true);
 		$this->scoreboard = new Scoreboard($plugin, Utils::addGuillemets("§a§lWRESTLING"), Scoreboard::ACTION_MODIFY);
 
 		if ($this->setup) {
@@ -186,7 +191,7 @@ class Arena implements Listener, Game
 			$this->level = $level;
 		}
 
-
+		$this->gameType = $this->data["gametype"];
 		$this->phase = static::PHASE_LOBBY;
 		$this->players = [];
 	}
@@ -207,13 +212,81 @@ class Arena implements Listener, Game
 		foreach ($this->players as $player) {
 			$players[$player->getName()] = $player;
 			$player->setGamemode($player::SURVIVAL);
+			$player->setImmobile(false);
+			$this->scoreboard->showTo($player);
 		}
-
 
 		$this->players = $players;
 		$this->phase = 1;
+		$this->setArmor($this->gameType);
+		$this->broadcastMessage("§9FIGHT!", self::MSG_TITLE);
+	}
 
-		$this->broadcastMessage("Game Started!", self::MSG_TITLE);
+	private function setArmor(string $gameType)
+	{
+		switch ($gameType) {
+			case Game::SUMO:
+				foreach ($this->players as $player) {
+					$player->getArmorInventory()->clearAll();
+					$player->getInventory()->clearAll();
+					$player->removeAllEffects();
+				}
+				break;
+			case Game::BUHC:
+				$helmet = Item::get(Item::DIAMOND_HELMET);
+				$chestplate = Item::get(Item::DIAMOND_CHESTPLATE);
+				$leggings = Item::get(Item::DIAMOND_LEGGINGS);
+				$boots = Item::get(Item::DIAMOND_BOOTS);
+				$sword = Item::get(Item::DIAMOND_SWORD);
+				$bow = Item::get(Item::BOW);
+				$helmet->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::PROTECTION)));
+				$chestplate->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::PROTECTION), 2));
+				$leggings->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::PROTECTION)));
+				$boots->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::PROTECTION)));
+				$sword->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::SHARPNESS)));
+				$bow->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::POWER)));
+				foreach ($this->players as $player) {
+					$player->getArmorInventory()->setHelmet($helmet);
+					$player->getArmorInventory()->setChestplate($chestplate);
+					$player->getArmorInventory()->setLeggings($leggings);
+					$player->getArmorInventory()->setBoots($boots);
+					$player->getInventory()->setItem(0, $sword);
+					$player->getInventory()->setItem(1, $bow);
+					$player->getInventory()->setItem(2, Item::get(Item::BUCKET));
+					$player->getInventory()->setItem(3, Item::get(Item::WOODEN_PLANKS, 0, 64));
+					$player->getInventory()->setItem(4, Item::get(Item::WOODEN_PLANKS, 0, 64));
+					$player->getInventory()->setItem(5, Item::get(Item::GOLDEN_APPLE, 0, 5));
+					$player->getInventory()->setItem(6, Item::get(Item::GOLDEN_APPLE, 0, 5));
+					$player->getInventory()->setItem(7, Item::get(Item::FISHING_ROD));
+					$player->getInventory()->addItem(Item::get(Item::ARROW, 0, 64));
+				}
+				break;
+			case Game::ONEVSONE:
+				$helmet = Item::get(Item::DIAMOND_HELMET);
+				$chestplate = Item::get(Item::DIAMOND_CHESTPLATE);
+				$leggings = Item::get(Item::DIAMOND_LEGGINGS);
+				$boots = Item::get(Item::DIAMOND_BOOTS);
+				$sword = Item::get(Item::DIAMOND_SWORD);
+				$helmet->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::PROTECTION)));
+				$chestplate->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::PROTECTION), 2));
+				$leggings->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::PROTECTION)));
+				$boots->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::PROTECTION)));
+				$sword->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::SHARPNESS)));
+				foreach ($this->players as $player) {
+					$player->getArmorInventory()->setHelmet($helmet);
+					$player->getArmorInventory()->setChestplate($chestplate);
+					$player->getArmorInventory()->setLeggings($leggings);
+					$player->getArmorInventory()->setBoots($boots);
+					$player->getInventory()->setItem(0, $sword);
+					$player->getInventory()->setItem(1, Item::get(Item::ENDER_PEARL, 0, 16));
+					$player->getInventory()->setItem(2, Item::get(Item::STEAK, 0, 32));
+					for ($i = 3; $i < 8; $i++) {
+						$player->getInventory()->addItem(Item::get(Item::SPLASH_POTION, 22));
+					}
+
+				}
+				break;
+		}
 	}
 
 	/**
@@ -241,6 +314,11 @@ class Arena implements Listener, Game
 		}
 	}
 
+	/**
+	 * @param int $id
+	 * @param array $targetData
+	 * @param int $padding
+	 */
 	public function updateTargets(int $id, array $targetData = [], int $padding = 0): void
 	{
 		switch ($id) {
@@ -256,10 +334,12 @@ class Arena implements Listener, Game
 				break;
 			case self::SCOREBOARD_UPDATE:
 				$this->scoreboard->removeLines();
-				foreach ($targetData as $lineIndex => $text) {
-					$this->scoreboard->setLine($lineIndex, $text);
-				}
 				foreach ($this->players as $player) {
+					$this->scoreboard->setLine(1, "§7-------------");
+					$this->scoreboard->setLine(2, "§bUser: §7" . $player->getName());
+					$this->scoreboard->setLine(3, "§bGame: §7" . $this->gameType);
+					$this->scoreboard->setLine(4, "§bStatus: §3In Game");
+					$this->scoreboard->setLine(5, "§7-------------");
 					$this->scoreboard->showTo($player);
 				}
 				break;
@@ -278,8 +358,8 @@ class Arena implements Listener, Game
 			return;
 		}
 
-		$player->sendTitle("§aYOU WON!");
-		$this->plugin->getServer()->broadcastMessage("§a[Wrestling] Player {$player->getName()} won the game at {$this->level->getFolderName()}!");
+		$player->sendTitle(Utils::addGuillemets("§aVictory!"));
+		$this->plugin->getServer()->broadcastMessage("§l§a» §r§7[Wrestling] Player §b{$player->getName()} §7won the game at §b{$this->level->getFolderName()}!");
 		$this->phase = self::PHASE_RESTART;
 	}
 
@@ -299,14 +379,10 @@ class Arena implements Listener, Game
 		if ($this->phase != self::PHASE_LOBBY) return;
 		$player = $event->getPlayer();
 		if ($this->inGame($player)) {
-			$index = null;
-			foreach ($this->players as $i => $p) {
-				if ($p->getId() == $player->getId()) {
-					$index = $i;
-				}
-			}
-			if ($event->getPlayer()->asVector3()->distance(Vector3::fromString($this->data["spawns"][$index])) > 1) {
-				$player->teleport(Vector3::fromString($this->data["spawns"][$index]));
+			if ($player->getY() <= self::MINIMUM_VOID) {
+				$this->toRespawn[$player->getName()] = $player;
+				$this->disconnectPlayer($player, "", true);
+				$this->broadcastMessage("§a§l» §r§7{$player->getName()} has fallen into void §7[" . count($this->players) . "/{$this->data["slots"]}]");
 			}
 		}
 	}
@@ -329,114 +405,6 @@ class Arena implements Listener, Game
 			default:
 				return isset($this->players[$player->getName()]);
 		}
-	}
-
-	/**
-	 * @param PlayerExhaustEvent $event
-	 */
-	public function onExhaust(PlayerExhaustEvent $event)
-	{
-		$player = $event->getPlayer();
-
-		if (!$player instanceof Player) return;
-
-		if ($this->inGame($player) && $this->phase == self::PHASE_LOBBY) {
-			$event->setCancelled(true);
-		}
-	}
-
-	/**
-	 * @param PlayerInteractEvent $event
-	 */
-	public function onInteract(PlayerInteractEvent $event)
-	{
-		$player = $event->getPlayer();
-		$block = $event->getBlock();
-
-		if ($this->inGame($player) && $event->getBlock()->getId() == Block::CHEST && $this->phase == self::PHASE_LOBBY) {
-			$event->setCancelled(true);
-			return;
-		}
-
-		if (!$block->getLevel()->getTile($block) instanceof Tile) {
-			return;
-		}
-
-		if ($this->phase == self::PHASE_GAME) {
-			$player->sendMessage("§c> Arena is in-game");
-			return;
-		}
-		if ($this->phase == self::PHASE_RESTART) {
-			$player->sendMessage("§c> Arena is restarting!");
-			return;
-		}
-
-		if ($this->setup) {
-			return;
-		}
-
-		$this->joinToArena($player);
-	}
-
-	/**
-	 * @param Player $player
-	 */
-	public function joinToArena(Player $player)
-	{
-		if (!$this->data["enabled"]) {
-			$player->sendMessage("§c> Arena is under setup!");
-			return;
-		}
-
-		if (count($this->players) >= $this->data["slots"]) {
-			$player->sendMessage("§c> Arena is full!");
-			return;
-		}
-
-		if ($this->inGame($player)) {
-			$player->sendMessage("§c> You are already in game!");
-			return;
-		}
-
-		$selected = false;
-		for ($lS = 1; $lS <= $this->data["slots"]; $lS++) {
-			if (!$selected) {
-				if (!isset($this->players[$index = "spawn-{$lS}"])) {
-					$player->teleport(Position::fromObject(Vector3::fromString($this->data["spawns"][$index]), $this->level));
-					$this->players[$index] = $player;
-					$selected = true;
-				}
-			}
-		}
-
-		$player->getInventory()->clearAll();
-		$player->getArmorInventory()->clearAll();
-		$player->getCursorInventory()->clearAll();
-
-		$player->setGamemode($player::ADVENTURE);
-		$player->setHealth(20);
-		$player->setFood(20);
-
-		$this->broadcastMessage("§a> Player {$player->getName()} joined! §7[" . count($this->players) . "/{$this->data["slots"]}]");
-	}
-
-	/**
-	 * @param PlayerDeathEvent $event
-	 */
-	public function onDeath(PlayerDeathEvent $event)
-	{
-		$player = $event->getPlayer();
-
-		if (!$this->inGame($player)) return;
-
-		foreach ($event->getDrops() as $item) {
-			$player->getLevel()->dropItem($player, $item);
-		}
-		$this->toRespawn[$player->getName()] = $player;
-		$this->disconnectPlayer($player, "", true);
-		$this->broadcastMessage("§a> {$this->plugin->getServer()->getLanguage()->translate($event->getDeathMessage())} §7[" . count($this->players) . "/{$this->data["slots"]}]");
-		$event->setDeathMessage("");
-		$event->setDrops([]);
 	}
 
 	/**
@@ -469,20 +437,167 @@ class Arena implements Listener, Game
 
 		$player->setHealth(20);
 		$player->setFood(20);
+		$player->setImmobile(false);
+		$player->getInventory()->clearAll();
+		$player->getArmorInventory()->clearAll();
+		$player->getCursorInventory()->clearAll();
+		$this->scoreboard->hideFrom($player);
+		$this->bossbar->hideFrom($player);
+		$player->teleport($this->plugin->getServer()->getDefaultLevel()->getSpawnLocation());
+
+		if (!$death) {
+			$this->broadcastMessage("§a§l» §r§7Player {$player->getName()} left the game. §7[" . count($this->players) . "/{$this->data["slots"]}]");
+		}
+
+		if ($quitMsg != "") {
+			$player->sendMessage("§a§l» §r§7 $quitMsg");
+		}
+	}
+
+	/**
+	 * @param BlockBreakEvent $event
+	 */
+	public function onBreak(BlockBreakEvent $event)
+	{
+		$player = $event->getPlayer();
+		if ($this->inGame($player)) {
+			switch ($this->gameType) {
+				case self::SUMO:
+				case self::ONEVSONE:
+					$event->setCancelled(true);
+					break;
+			}
+		}
+	}
+
+	/**
+	 * @param EntityDamageEvent $event
+	 */
+	public function onEntityDamage(EntityDamageEvent $event)
+	{
+		$player = $event->getEntity();
+		if ($player instanceof Player && $this->inGame($player)) {
+			switch ($this->gameType) {
+				case Game::SUMO:
+					if ($event->getCause() === EntityDamageEvent::CAUSE_VOID){
+						break;
+					}
+					$player->setHealth(21);
+					break;
+				case Game::ONEVSONE:
+				case Game::BUHC:
+					if ($event->getFinalDamage() > $player->getHealth()) {
+						$this->toRespawn[$player->getName()] = $player;
+						$this->disconnectPlayer($player, "", true);
+						$this->broadcastMessage("§a§l» §r§7{$player->getName()} has dead §7[" . count($this->players) . "/{$this->data["slots"]}]");
+					}
+					break;
+			}
+		}
+	}
+
+	public function onEntityDamageByEntity(EntityDamageByEntityEvent $event)
+	{
+		$player = $event->getEntity();
+		$damager = $event->getDamager();
+		if ($player instanceof Player && $this->inGame($player) && $damager instanceof Player) {
+			switch ($this->gameType) {
+				case Game::SUMO:
+					$player->setHealth(21.0);
+					$damager->setHealth(21.0);
+					break;
+				case Game::ONEVSONE:
+				case Game::BUHC:
+					if ($event->getFinalDamage() > $player->getHealth()) {
+						$this->toRespawn[$player->getName()] = $player;
+						$this->disconnectPlayer($player, "", true);
+						$this->broadcastMessage("§a§l» §r§7{$player->getName()} has dead §7[" . count($this->players) . "/{$this->data["slots"]}]");
+					}
+					break;
+			}
+		}
+	}
+
+	/**
+	 * @param PlayerExhaustEvent $event
+	 */
+	public function onExhaust(PlayerExhaustEvent $event)
+	{
+		$player = $event->getPlayer();
+
+		if (!$player instanceof Player) return;
+
+		if ($this->inGame($player) && $this->phase == self::PHASE_LOBBY) {
+			$event->setCancelled(true);
+		}
+	}
+
+	/**
+	 * @param Player $player
+	 */
+	public function joinToArena(Player $player)
+	{
+		if (!$this->data["enabled"]) {
+			$player->sendMessage("§c§l» §r§7Arena is under setup!");
+			return;
+		}
+
+		if ($this->phase !== self::PHASE_LOBBY) {
+			$player->sendMessage("§c§l» §r§7Arena is full!");
+			return;
+		}
+
+		if (count($this->players) >= $this->data["slots"]) {
+			$player->sendMessage("§c§l» §r§7Arena is full!");
+			return;
+		}
+
+		if ($this->inGame($player)) {
+			$player->sendMessage("§c§l» §r§7You are already in game!");
+			return;
+		}
+
+		$selected = false;
+		for ($lS = 1; $lS <= $this->data["slots"]; $lS++) {
+			if (!$selected) {
+				if (!isset($this->players[$index = "spawn-{$lS}"])) {
+					$player->teleport(Position::fromObject(Vector3::fromString($this->data["spawns"][$index]), $this->level));
+					$this->players[$index] = $player;
+					$selected = true;
+				}
+			}
+		}
 
 		$player->getInventory()->clearAll();
 		$player->getArmorInventory()->clearAll();
 		$player->getCursorInventory()->clearAll();
+		$player->setXpLevel(0);
+		$player->setXpProgress(0.0);
+		$player->setGamemode($player::ADVENTURE);
+		$player->setImmobile(true);
+		$player->setHealth(20);
+		$player->setFood(20);
+		$this->bossbar->showTo($player);
+		$this->broadcastMessage("§a§l» §r§7Player {$player->getName()} joined! §7[" . count($this->players) . "/{$this->data["slots"]}]");
+	}
 
-		$player->teleport($this->plugin->getServer()->getDefaultLevel()->getSpawnLocation());
+	/**
+	 * @param PlayerDeathEvent $event
+	 */
+	public function onDeath(PlayerDeathEvent $event)
+	{
+		$player = $event->getPlayer();
 
-		if (!$death) {
-			$this->broadcastMessage("§a> Player {$player->getName()} left the game. §7[" . count($this->players) . "/{$this->data["slots"]}]");
+		if (!$this->inGame($player)) return;
+
+		foreach ($event->getDrops() as $item) {
+			$player->getLevel()->dropItem($player, $item);
 		}
-
-		if ($quitMsg != "") {
-			$player->sendMessage("§a> $quitMsg");
-		}
+		$this->toRespawn[$player->getName()] = $player;
+		$this->disconnectPlayer($player, "", true);
+		$this->broadcastMessage("§a§l» §r§7{$this->plugin->getServer()->getLanguage()->translate($event->getDeathMessage())} §7[" . count($this->players) . "/{$this->data["slots"]}]");
+		$event->setDeathMessage("");
+		$event->setDrops([]);
 	}
 
 	/**
